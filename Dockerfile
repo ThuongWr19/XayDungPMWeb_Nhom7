@@ -26,4 +26,4 @@ RUN composer install --optimize-autoloader --no-dev
 
 # Lệnh cuối cùng: Khởi động server Laravel! 
 # Render bắt buộc ứng dụng phải lắng nghe ở địa chỉ 0.0.0.0 và cổng do Render tự cấp ($PORT)
-CMD php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
