@@ -20,7 +20,7 @@ WORKDIR /app
 
 # Copy toàn bộ code Laravel của bạn từ máy tính vào trong container
 COPY . .
-
+RUN composer update
 # Chạy lệnh cài đặt các thư viện của Laravel (nằm trong file composer.json)
 RUN composer install --optimize-autoloader --no-dev
 
