@@ -37,5 +37,8 @@ RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
     && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
+# Run migrations and then start the server
+# The --force flag is required to run migrations in production mode
+CMD php artisan migrate --force && php-fpm
 # 10. Mở port 80 để Render có thể giao tiếp với ứng dụng
 EXPOSE 80
