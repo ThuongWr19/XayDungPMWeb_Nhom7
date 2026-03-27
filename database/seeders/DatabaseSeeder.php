@@ -2,24 +2,37 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
+use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
+    use WithoutModelEvents;
+
     /**
      * Seed the application's database.
-     *
-     * @return void
      */
-    public function run()
+    public function run(): void
     {
-        \App\Models\User::insert([
-            ['id' => '1', 'name' => 'Nguyễn Văn Thưởng'],
-            ['id' => '2', 'name' => 'Hồ Tuấn Khải'],
-            ['id' => '3', 'name' => 'Hoàng Hà Thiện Nhân'],
-            ['id' => '4', 'name' => 'Huỳnh Ngọc Quân'],
-            ['id' => '5', 'name' => 'Ngô Minh Nhật'],
-            ['id' => '6', 'name' => 'Đặng Phước Lộc'],
+        // 1. Tạo 1 tài khoản Admin xịn xò cố định
+        User::create([
+            'name' => 'Quản trị viên',
+            'email' => 'admin@gmail.com',
+            'password' => Hash::make('123456'), 
+            'role' => 1, 
+            'phone' => '0999888777',
+            'class' => null,
         ]);
+
+        // 2. Dùng vòng lặp chạy 10 lần để đảm bảo mỗi lần là 1 lớp random khác nhau
+        for ($i = 0; $i < 10; $i++) {
+            User::factory()->create([
+                'password' => Hash::make('123456'),
+                'role' => 0, 
+                'class' => fake()->randomElement(['12A1', 'CNTT1', 'KTPM2', 'ĐTVT1']), 
+            ]);
+        }
     }
 }
