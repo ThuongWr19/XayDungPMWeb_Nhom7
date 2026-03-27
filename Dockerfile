@@ -22,4 +22,5 @@ RUN composer install --no-dev --optimize-autoloader
 RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Lệnh khởi chạy (Apache sẽ tự động chạy ở cổng 80 bên trong container)
-CMD php artisan migrate --force && apache2-foreground
+
+CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=10000
