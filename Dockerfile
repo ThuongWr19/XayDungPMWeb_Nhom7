@@ -1,29 +1,17 @@
-# Sử dụng phiên bản PHP 8.2 (Chuẩn cho Laravel 11/12)
-FROM php:8.2-cli
-
-# Cài đặt các thư viện lõi của hệ điều hành Linux
-RUN apt-get update -y && apt-get install -y \
-    unzip \
+# Cài đặt các thư viện hệ thống cần thiết cho GD và các tiện ích khác
+RUN apt-get update && apt-get install -y \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libzip-dev \
     zip \
-    git \
-    libmariadb-dev \
-    libzip-dev
+    unzip \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo_mysql zip
 
-# Cài đặt các gói mở rộng của PHP (quan trọng nhất là pdo_mysql để sau này chọc vào Database)
-RUN docker-php-ext-install pdo_mysql zip
-
-# Tải Composer (công cụ quản lý thư viện của PHP)
-COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
-
-# Đặt thư mục làm việc mặc định trong container là /app
-WORKDIR /app
-
-# Copy toàn bộ code Laravel của bạn từ máy tính vào trong container
+# Sau đó mới đến các lệnh COPY và composer
 COPY . .
-RUN composer update
-# Chạy lệnh cài đặt các thư viện của Laravel (nằm trong file composer.json)
-RUN composer install --optimize-autoloader --no-dev
 
-# Lệnh cuối cùng: Khởi động server Laravel! 
-# Render bắt buộc ứng dụng phải lắng nghe ở địa chỉ 0.0.0.0 và cổng do Render tự cấp ($PORT)
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=${PORT:-8000}
+# Khuyên dùng: Nên dùng 'composer install' thay vì 'composer update' trong Dockerfile 
+# để đảm bảo tính nhất quán giữa môi trường dev và production
+RUN composer install --no-interaction --optimize-autoloader --no-dev
