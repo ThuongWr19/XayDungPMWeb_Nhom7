@@ -111,25 +111,29 @@ class ExamController extends Controller
         }
     }
 
-    public function forceSubmit(Request $request, $id)
+    public function getActiveAttempts($id)
     {
-        // Cần có middleware kiểm tra quyền Admin/Giám thị ở đây
-        $attempt = ExamAttempt::findOrFail($id);
-        $attempt->status = 'forced_submitted';
-        $attempt->completed_at = now();
-        $attempt->save();
-
-        return response()->json(['message' => 'Đã cưỡng chế thu bài sinh viên thành công.']);
-    }
-
-    public function getActiveAttempts($examId)
-    {
-        // Lấy các lượt thi đang diễn ra ('in_progress') kèm thông tin user
-        $attempts = ExamAttempt::with('user')
-            ->where('exam_id', $examId)
-            ->where('status', 'in_progress')
+        $attempts = ExamAttempt::with('user:id,name,email,class') // Lấy kèm thông tin user
+            ->where('exam_id', $id)
+            ->orderBy('started_at', 'desc')
             ->get();
             
         return response()->json($attempts);
+    }
+
+    // 2. Ép buộc thu bài (Đình chỉ thi)
+    public function forceSubmit($id)
+    {
+        $attempt = ExamAttempt::findOrFail($id);
+        
+        if ($attempt->status === 'in_progress') {
+            $attempt->status = 'forced_submitted';
+            $attempt->submitted_at = now();
+            $attempt->save();
+            
+            return response()->json(['message' => 'Đã thu bài sinh viên thành công.']);
+        }
+        
+        return response()->json(['message' => 'Bài thi này đã kết thúc trước đó.'], 400);
     }
 }

@@ -118,12 +118,12 @@ class StudentExamController extends Controller
     public function submit(Request $request, $examId)
     {
         $request->validate([
-            'answers' => 'required|array', // Format: ['question_id' => 'selected_option']
+            'answers' => 'nullable|array', 
         ]);
 
         $exam = Exam::with('questions')->findOrFail($examId);
         $user = $request->user();
-        $answers = $request->answers;
+        $answers = $request->answers ?? [];
 
         $correctCount = 0;
         $totalQuestions = $exam->questions->count();
@@ -153,7 +153,7 @@ class StudentExamController extends Controller
         // Lưu vào CSDL
         $attempt = ExamAttempt::where('user_id', $user->id)
             ->where('exam_id', $exam->id)
-            ->first();
+            ->firstOrFail();
 
         $attempt->update([
             'score' => $score,
@@ -165,7 +165,7 @@ class StudentExamController extends Controller
             'submitted_at' => now()
         ]);
 
-        Mail::to($user->email)->queue(new ExamResultMail($score, $examDetails));
+        Mail::to($user->email)->queue(new ExamResultMail($score, $details));
 
         return response()->json([
             'message' => 'Nộp bài thành công!',
@@ -176,15 +176,22 @@ class StudentExamController extends Controller
         ]);
     }
 
-    public function logViolation($id)
+    // Sửa lại tham số truyền vào là $examId
+    public function logViolation($examId)
     {
-        $attempt = ExamAttempt::findOrFail($id);
+        $user = auth()->user();
+        
+        // Tìm phiên làm bài dựa trên user_id và exam_id
+        $attempt = ExamAttempt::where('user_id', $user->id)
+            ->where('exam_id', $examId)
+            ->firstOrFail(); // Sẽ báo lỗi nếu sinh viên chưa bắt đầu làm bài này
+
         $attempt->cheat_count += 1;
         
         // Nếu vi phạm quá 3 lần, tự động thu bài
         if ($attempt->cheat_count >= 3) {
             $attempt->status = 'forced_submitted';
-            $attempt->completed_at = now();
+            $attempt->submitted_at = now(); // <--- Sửa 'completed_at' thành 'submitted_at'
             $attempt->save();
             
             return response()->json(['message' => 'Bài thi đã bị thu do vi phạm quy chế quá nhiều lần.', 'forced' => true]);

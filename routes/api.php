@@ -8,6 +8,8 @@ use App\Http\Controllers\ExamController;
 use App\Http\Controllers\StudentExamController;
 // THÊM DÒNG NÀY ĐỂ IMPORT CONTROLLER THÔNG BÁO
 use App\Http\Controllers\NotificationController; 
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\SystemSettingController;
 
 
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
@@ -28,6 +30,10 @@ Route::middleware('auth:sanctum')->group(function () {
         // API Giám sát phòng thi
         Route::get('/exams/{id}/active-attempts', [ExamController::class, 'getActiveAttempts']);
         Route::post('/exam-attempts/{id}/force-submit', [ExamController::class, 'forceSubmit']);
+
+        Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
+        Route::get('/settings', [SystemSettingController::class, 'getSettings']);
+        Route::post('/settings', [SystemSettingController::class, 'updateSettings']);
     });
     // ------------------------------------------------------------------
 
@@ -48,6 +54,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/student/exams/{id}/check-password', [StudentExamController::class, 'checkPassword']);
     Route::get('/student/exams/history', [StudentExamController::class, 'getHistory']);
 
+    // Thay thế dòng log-violation cũ bằng dòng này:
+    Route::post('/exams/{id}/log-violation', [StudentExamController::class, 'logViolation']);
     Route::post('/exams/{exam}/submit', [StudentExamController::class, 'submit']);
     Route::get('/exams/{exam}/statistics', [ExamController::class, 'statistics']);
     Route::get('/exams/{exam}/export', [ExamController::class, 'export']);
