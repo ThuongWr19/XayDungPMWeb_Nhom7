@@ -25,4 +25,4 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 
 # Chạy migration và seed dữ liệu trước khi khởi động server
 
-CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground
+CMD apache2-foreground
