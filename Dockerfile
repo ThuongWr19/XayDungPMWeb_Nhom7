@@ -1,4 +1,4 @@
-FROM php:8.2-apache
+FROM php:8.4-apache
 
 # Cài đặt extension (giống như trước nhưng không cần libzip-dev vì một số bản đã có sẵn)
 RUN apt-get update && apt-get install -y \
@@ -24,4 +24,5 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 # Lệnh khởi chạy (Apache sẽ tự động chạy ở cổng 80 bên trong container)
 
 # Chạy migration và seed dữ liệu trước khi khởi động server
-CMD php artisan migrate --force && php artisan db:seed --force && php artisan serve --host=0.0.0.0 --port=10000
+
+CMD php artisan migrate --force && php artisan db:seed --force && apache2-foreground

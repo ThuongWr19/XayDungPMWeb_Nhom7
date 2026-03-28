@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\QuestionController;
+use App\Http\Controllers\ExamController;
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -22,4 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/questions/import', [QuestionController::class, 'import']);
     Route::apiResource('questions', QuestionController::class);
+
+    Route::post('/exams/{id}/toggle-status', [ExamController::class, 'toggleStatus']);
+    Route::post('/exams/{id}/generate-questions', [ExamController::class, 'generateQuestions']);
+    Route::apiResource('exams', ExamController::class);
 });

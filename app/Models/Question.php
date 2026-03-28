@@ -11,4 +11,8 @@ class Question extends Model
     protected $fillable = [
         'subject', 'content', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_answer', 'difficulty'
     ];
+    
+    public function exams() {
+        return $this->belongsToMany(Exam::class, 'exam_question');
+    }
 }
