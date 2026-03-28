@@ -80,4 +80,36 @@ class StudentExamController extends Controller
 
         return response()->json(['message' => 'Hợp lệ, đang vào phòng thi...']);
     }
+
+    public function getHistory() {
+        $user = auth()->user();
+
+        // Lấy danh sách các bài thi đã nộp (status = completed), mới nhất lên đầu
+        // Sử dụng eager loading 'with' để lấy thông tin kỳ thi (exam) nhằm tối ưu truy vấn
+        $history = ExamAttempt::with('exam:id,title,total_questions') 
+            ->where('user_id', $user->id)
+            ->where('status', 'completed')
+            ->orderBy('submitted_at', 'desc')
+            ->get();
+
+        // Format lại dữ liệu trả về cho chuẩn với frontend React
+        $formattedHistory = $history->map(function ($attempt) {
+            $totalQuestions = $attempt->exam ? $attempt->exam->total_questions : 0;
+            
+            // Tính toán số câu đúng: giả sử điểm thi hệ 10
+            // Số câu đúng = (Điểm / 10) * Tổng số câu hỏi
+            $correctAnswers = $totalQuestions > 0 ? round(($attempt->score / 10) * $totalQuestions) : 0;
+
+            return [
+                'id' => $attempt->id,
+                'exam_title' => $attempt->exam ? $attempt->exam->title : 'Kỳ thi đã bị xóa',
+                'score' => round($attempt->score, 2),
+                'correct_answers' => $correctAnswers,
+                'total_questions' => $totalQuestions,
+                'completed_at' => $attempt->submitted_at ?? $attempt->updated_at,
+            ];
+        });
+
+        return response()->json($formattedHistory);
+    }
 }

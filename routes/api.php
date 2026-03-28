@@ -34,4 +34,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/student/exams/{id}/save-progress', [StudentExamController::class, 'saveProgress']);
     Route::get('/student/exams', [StudentExamController::class, 'getAvailableExams']);
     Route::post('/student/exams/{id}/check-password', [StudentExamController::class, 'checkPassword']);
+    Route::get('/student/exams/history', [StudentExamController::class, 'getHistory']);
 });

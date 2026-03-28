@@ -15,4 +15,9 @@ class ExamAttempt extends Model
         'answers' => 'array',
         'started_at' => 'datetime',
     ];
+    
+    public function exam()
+    {
+        return $this->belongsTo(Exam::class, 'exam_id');
+    }
 }
