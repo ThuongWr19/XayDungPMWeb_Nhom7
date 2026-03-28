@@ -3,7 +3,7 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\QuestionController;
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -19,4 +19,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // DELETE /users/{id} (Xóa)
     Route::post('/users/import', [UserController::class, 'import']);
     Route::apiResource('users', UserController::class); 
+
+    Route::post('/questions/import', [QuestionController::class, 'import']);
+    Route::apiResource('questions', QuestionController::class);
 });
