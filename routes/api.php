@@ -5,6 +5,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\StudentExamController;
+
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
 Route::post('/login', [AuthController::class, 'login']);
 
@@ -27,4 +29,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/exams/{id}/toggle-status', [ExamController::class, 'toggleStatus']);
     Route::post('/exams/{id}/generate-questions', [ExamController::class, 'generateQuestions']);
     Route::apiResource('exams', ExamController::class);
+
+    Route::get('/student/exams/{id}/do', [StudentExamController::class, 'getExam']);
+    Route::post('/student/exams/{id}/save-progress', [StudentExamController::class, 'saveProgress']);
+    Route::get('/student/exams', [StudentExamController::class, 'getAvailableExams']);
+    Route::post('/student/exams/{id}/check-password', [StudentExamController::class, 'checkPassword']);
 });

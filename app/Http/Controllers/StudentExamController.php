@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Exam;
+use App\Models\ExamAttempt;
+use Illuminate\Http\Request;
+
+class StudentExamController extends Controller
+{
+    // Lấy đề thi và Khởi tạo phiên làm bài
+    public function getExam($examId) {
+        $user = auth()->user();
+        
+        // 1. Lấy thông tin kỳ thi (Chỉ lấy kỳ thi đang mở)
+        $exam = Exam::where('is_active', true)->findOrFail($examId);
+
+        // 2. Lấy danh sách câu hỏi BẢO MẬT: 
+        // Ẩn tuyệt đối cột 'correct_answer' để sinh viên không thể F12 xem trộm
+        $questions = $exam->questions()->select('questions.id', 'content', 'option_a', 'option_b', 'option_c', 'option_d')->inRandomOrder()->get();
+
+        // 3. Tìm hoặc Tạo mới phiên làm bài (Phòng trường hợp F5 rớt mạng)
+        $attempt = ExamAttempt::firstOrCreate(
+            ['user_id' => $user->id, 'exam_id' => $exam->id],
+            ['started_at' => now(), 'answers' => []]
+        );
+
+        // 4. Tính toán thời gian còn lại (Phút)
+        $elapsedMinutes = now()->diffInMinutes($attempt->started_at);
+        $timeLeft = max(0, $exam->duration - $elapsedMinutes); // Trả về số phút còn lại
+
+        return response()->json([
+            'exam' => $exam,
+            'questions' => $questions,
+            'saved_answers' => $attempt->answers ?? (object)[], // Trả về các câu đã làm lưu nháp trước đó
+            'time_left_seconds' => $timeLeft * 60, // Đổi ra giây cho Frontend đếm ngược
+            'status' => $attempt->status
+        ]);
+    }
+
+    // API Lưu nháp bài làm (Auto-save)
+    public function saveProgress(Request $request, $examId) {
+        $user = auth()->user();
+        $attempt = ExamAttempt::where('user_id', $user->id)->where('exam_id', $examId)->firstOrFail();
+        
+        if ($attempt->status === 'completed') {
+            return response()->json(['message' => 'Bài thi đã nộp, không thể sửa!'], 403);
+        }
+
+        // Lưu đáp án vào CSDL dạng JSON
+        $attempt->answers = $request->answers; 
+        $attempt->save();
+
+        return response()->json(['message' => 'Đã lưu nháp']);
+    }
+
+    public function getAvailableExams() {
+        // Chỉ lấy các kỳ thi có is_active = true
+        $exams = Exam::where('is_active', true)
+                     ->orderBy('id', 'desc')
+                     ->get(['id', 'title', 'subject', 'duration', 'total_questions', 'start_time', 'end_time', 'password']); 
+        
+        // Map lại dữ liệu để frontend biết kỳ thi có mật khẩu hay không (KHÔNG trả về mật khẩu thật)
+        $exams->transform(function($exam) {
+            $exam->has_password = !empty($exam->password);
+            unset($exam->password); // Xóa password thật trước khi gửi về Frontend để bảo mật
+            return $exam;
+        });
+
+        return response()->json($exams);
+    }
+
+    // API Kiểm tra mật khẩu phòng thi
+    public function checkPassword(Request $request, $id) {
+        $exam = Exam::findOrFail($id);
+        
+        if (!empty($exam->password) && $exam->password !== $request->password) {
+            return response()->json(['error' => 'Mật khẩu phòng thi không chính xác!'], 403);
+        }
+
+        return response()->json(['message' => 'Hợp lệ, đang vào phòng thi...']);
+    }
+}
