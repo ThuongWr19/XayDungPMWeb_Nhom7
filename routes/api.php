@@ -35,4 +35,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/exams', [StudentExamController::class, 'getAvailableExams']);
     Route::post('/student/exams/{id}/check-password', [StudentExamController::class, 'checkPassword']);
     Route::get('/student/exams/history', [StudentExamController::class, 'getHistory']);
+
+
+    Route::post('/exams/{exam}/submit', [StudentExamController::class, 'submit']);
+    Route::get('/exams/{exam}/statistics', [ExamController::class, 'statistics']);
+    Route::get('/exams/{exam}/export', [ExamController::class, 'export']);
 });

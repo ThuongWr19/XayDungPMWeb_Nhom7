@@ -112,4 +112,63 @@ class StudentExamController extends Controller
 
         return response()->json($formattedHistory);
     }
+
+    public function submit(Request $request, $examId)
+    {
+        $request->validate([
+            'answers' => 'required|array', // Format: ['question_id' => 'selected_option']
+        ]);
+
+        $exam = Exam::with('questions')->findOrFail($examId);
+        $user = $request->user();
+        $answers = $request->answers;
+
+        $correctCount = 0;
+        $totalQuestions = $exam->questions->count();
+        $details = [];
+
+        foreach ($exam->questions as $question) {
+            $userAnswer = $answers[$question->id] ?? null;
+            $isCorrect = $userAnswer === $question->correct_answer;
+            
+            if ($isCorrect) {
+                $correctCount++;
+            }
+
+            $details[] = [
+                'question_id' => $question->id,
+                'question_text' => $question->content,
+                'user_answer' => $userAnswer,
+                'correct_answer' => $question->correct_answer,
+                'is_correct' => $isCorrect
+            ];
+        }
+
+        // Tính điểm hệ 10
+        $score = $totalQuestions > 0 ? round(($correctCount / $totalQuestions) * 10, 2) : 0;
+        $isPassed = $score >= 5.0; // Giả sử 5.0 là điểm chuẩn để đậu
+
+        // Lưu vào CSDL
+        $attempt = ExamAttempt::where('user_id', $user->id)
+            ->where('exam_id', $exam->id)
+            ->first();
+
+        $attempt->update([
+            'score' => $score,
+            'total_correct' => $correctCount,
+            'total_questions' => $totalQuestions,
+            'is_passed' => $isPassed,
+            'details' => json_encode($details),
+            'status' => 'completed',
+            'submitted_at' => now()
+        ]);
+
+        return response()->json([
+            'message' => 'Nộp bài thành công!',
+            'score' => $score,
+            'correct_count' => $correctCount,
+            'total_questions' => $totalQuestions,
+            'details' => $details
+        ]);
+    }
 }

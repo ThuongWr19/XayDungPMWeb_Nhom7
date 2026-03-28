@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\Exam;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use App\Models\ExamAttempt;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\ExamResultExport;
+
 
 class ExamController extends Controller
 {
@@ -69,5 +73,41 @@ class ExamController extends Controller
         $exam->questions()->sync($randomQuestions);
 
         return response()->json(['message' => 'Đã tạo xong đề thi ngẫu nhiên với ' . $exam->total_questions . ' câu hỏi!']);
+    }
+
+    public function statistics($examId)
+    {
+        $attempts = ExamAttempt::where('exam_id', $examId)->get();
+
+        $totalStudents = $attempts->count();
+        $passed = $attempts->where('is_passed', true)->count();
+        $failed = $totalStudents - $passed;
+
+        // Phổ điểm
+        $scoreDistribution = [
+            '0-3' => $attempts->whereBetween('score', [0, 3.99])->count(),
+            '4-6' => $attempts->whereBetween('score', [4, 6.99])->count(),
+            '7-8' => $attempts->whereBetween('score', [7, 8.99])->count(),
+            '9-10' => $attempts->whereBetween('score', [9, 10])->count(),
+        ];
+
+        return response()->json([
+            'total_students' => $totalStudents,
+            'passed' => $passed,
+            'failed' => $failed,
+            'distribution' => $scoreDistribution // <-- Key này phải có
+        ]);
+    }
+
+    public function export($id) {
+        try {
+            // Kiểm tra xem kỳ thi có tồn tại không
+            $exam = Exam::findOrFail($id); 
+            return Excel::download(new ExamResultExport($id), "ket-qua-thi-{$id}.xlsx");
+        } catch (\Exception $e) {
+            // Ghi lại lỗi thực tế vào log để debug
+            \Log::error("Export Excel Error: " . $e->getMessage());
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }
