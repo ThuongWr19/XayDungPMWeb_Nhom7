@@ -6,20 +6,32 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\ExamController;
 use App\Http\Controllers\StudentExamController;
+// THÊM DÒNG NÀY ĐỂ IMPORT CONTROLLER THÔNG BÁO
+use App\Http\Controllers\NotificationController; 
+
 
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
 Route::post('/login', [AuthController::class, 'login']);
 
+// API lấy danh sách thông báo hiển thị cho sinh viên
+Route::get('/notifications', [NotificationController::class, 'getActiveNotifications']); 
 
 // --- CÁC API YÊU CẦU PHẢI ĐĂNG NHẬP (Gửi kèm Token) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    // apiResource tự động tạo ra 4 routes:
-    // GET /users (Lấy danh sách)
-    // POST /users (Thêm mới)
-    // PUT /users/{id} (Cập nhật)
-    // DELETE /users/{id} (Xóa)
+    // --- CÁC API DÀNH RIÊNG CHO CHỨC NĂNG MỚI THÊM (ADMIN/GIÁM THỊ) ---
+    Route::prefix('admin')->group(function () {
+        // API Quản lý thông báo (CRUD)
+        Route::apiResource('notifications', NotificationController::class);
+        
+        // API Giám sát phòng thi
+        Route::get('/exams/{id}/active-attempts', [ExamController::class, 'getActiveAttempts']);
+        Route::post('/exam-attempts/{id}/force-submit', [ExamController::class, 'forceSubmit']);
+    });
+    // ------------------------------------------------------------------
+
+    // Các API cũ của bạn giữ nguyên bên dưới:
     Route::post('/users/import', [UserController::class, 'import']);
     Route::apiResource('users', UserController::class); 
 
@@ -35,7 +47,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/student/exams', [StudentExamController::class, 'getAvailableExams']);
     Route::post('/student/exams/{id}/check-password', [StudentExamController::class, 'checkPassword']);
     Route::get('/student/exams/history', [StudentExamController::class, 'getHistory']);
-
 
     Route::post('/exams/{exam}/submit', [StudentExamController::class, 'submit']);
     Route::get('/exams/{exam}/statistics', [ExamController::class, 'statistics']);

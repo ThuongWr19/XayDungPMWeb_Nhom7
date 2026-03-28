@@ -110,4 +110,26 @@ class ExamController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
+
+    public function forceSubmit(Request $request, $id)
+    {
+        // Cần có middleware kiểm tra quyền Admin/Giám thị ở đây
+        $attempt = ExamAttempt::findOrFail($id);
+        $attempt->status = 'forced_submitted';
+        $attempt->completed_at = now();
+        $attempt->save();
+
+        return response()->json(['message' => 'Đã cưỡng chế thu bài sinh viên thành công.']);
+    }
+
+    public function getActiveAttempts($examId)
+    {
+        // Lấy các lượt thi đang diễn ra ('in_progress') kèm thông tin user
+        $attempts = ExamAttempt::with('user')
+            ->where('exam_id', $examId)
+            ->where('status', 'in_progress')
+            ->get();
+            
+        return response()->json($attempts);
+    }
 }

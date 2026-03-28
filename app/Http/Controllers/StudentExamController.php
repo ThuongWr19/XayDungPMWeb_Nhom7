@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Exam;
 use App\Models\ExamAttempt;
 use Illuminate\Http\Request;
+use App\Mail\ExamResultMail;
+use Illuminate\Support\Facades\Mail;
 
 class StudentExamController extends Controller
 {
@@ -163,6 +165,8 @@ class StudentExamController extends Controller
             'submitted_at' => now()
         ]);
 
+        Mail::to($user->email)->queue(new ExamResultMail($score, $examDetails));
+
         return response()->json([
             'message' => 'Nộp bài thành công!',
             'score' => $score,
@@ -170,5 +174,23 @@ class StudentExamController extends Controller
             'total_questions' => $totalQuestions,
             'details' => $details
         ]);
+    }
+
+    public function logViolation($id)
+    {
+        $attempt = ExamAttempt::findOrFail($id);
+        $attempt->cheat_count += 1;
+        
+        // Nếu vi phạm quá 3 lần, tự động thu bài
+        if ($attempt->cheat_count >= 3) {
+            $attempt->status = 'forced_submitted';
+            $attempt->completed_at = now();
+            $attempt->save();
+            
+            return response()->json(['message' => 'Bài thi đã bị thu do vi phạm quy chế quá nhiều lần.', 'forced' => true]);
+        }
+
+        $attempt->save();
+        return response()->json(['message' => 'Đã ghi nhận hành vi vi phạm.', 'cheat_count' => $attempt->cheat_count]);
     }
 }
