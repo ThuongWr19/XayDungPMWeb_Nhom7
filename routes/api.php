@@ -13,7 +13,7 @@ use App\Http\Controllers\SystemSettingController;
 
 
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
-Route::post('/login', [AuthController::class, 'login']);
+Route::middleware('throttle:30,1')->post('/login', [AuthController::class, 'login']);
 
 // API lấy danh sách thông báo hiển thị cho sinh viên
 Route::get('/notifications', [NotificationController::class, 'getActiveNotifications']); 
@@ -56,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Thay thế dòng log-violation cũ bằng dòng này:
     Route::post('/exams/{id}/log-violation', [StudentExamController::class, 'logViolation']);
-    Route::post('/exams/{exam}/submit', [StudentExamController::class, 'submit']);
+    Route::middleware('throttle:60,1')->post('/exams/{exam}/submit', [StudentExamController::class, 'submit']);
     Route::get('/exams/{exam}/statistics', [ExamController::class, 'statistics']);
     Route::get('/exams/{exam}/export', [ExamController::class, 'export']);
 });
