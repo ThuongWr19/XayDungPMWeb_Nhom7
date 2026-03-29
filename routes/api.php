@@ -13,7 +13,7 @@ use App\Http\Controllers\SystemSettingController;
 
 
 // --- CÁC API KHÔNG CẦN ĐĂNG NHẬP ---
-Route::middleware('throttle:30,1')->post('/login', [AuthController::class, 'login']);
+Route::middleware('throttle:20,1')->post('/login', [AuthController::class, 'login']);
 
 // API lấy danh sách thông báo hiển thị cho sinh viên
 Route::get('/notifications', [NotificationController::class, 'getActiveNotifications']); 
