@@ -21,7 +21,9 @@ Route::get('/notifications', [NotificationController::class, 'getActiveNotificat
 // --- CÁC API YÊU CẦU PHẢI ĐĂNG NHẬP (Gửi kèm Token) ---
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
-    
+    Route::get('/profile', [AuthController::class, 'profile']);
+    Route::post('/change-password', [AuthController::class, 'changePassword']);
+    Route::post('/update-profile', [AuthController::class, 'updateProfile']);
     // --- CÁC API DÀNH RIÊNG CHO CHỨC NĂNG MỚI THÊM (ADMIN/GIÁM THỊ) ---
     Route::prefix('admin')->group(function () {
         // API Quản lý thông báo (CRUD)
@@ -34,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard/statistics', [DashboardController::class, 'getStatistics']);
         Route::get('/settings', [SystemSettingController::class, 'getSettings']);
         Route::post('/settings', [SystemSettingController::class, 'updateSettings']);
+        
     });
     // ------------------------------------------------------------------
 

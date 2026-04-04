@@ -48,4 +48,71 @@ class AuthController extends Controller
             'message' => 'Đã đăng xuất thành công'
         ]);
     }
+
+    // 3. API Lấy thông tin tài khoản đang đăng nhập
+    public function profile(Request $request)
+    {
+        // Trả về thông tin của user gắn với token hiện tại
+        return response()->json($request->user());
+    }
+
+    // 4. API Đổi mật khẩu
+    public function changePassword(Request $request)
+    {
+        // Backend cũng cần validate lại để đảm bảo an toàn tuyệt đối
+        $request->validate([
+            'current_password' => 'required',
+            'new_password' => 'required|min:6|same:confirm_password',
+            'confirm_password' => 'required'
+        ], [
+            'new_password.min' => 'Mật khẩu mới phải có ít nhất 6 ký tự.',
+            'new_password.same' => 'Mật khẩu xác nhận không khớp.'
+        ]);
+
+        $user = $request->user();
+
+        // Kiểm tra mật khẩu hiện tại có đúng không
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json([
+                'message' => 'Mật khẩu hiện tại không đúng!'
+            ], 400); // 400 Bad Request
+        }
+
+        // Nếu đúng thì cập nhật mật khẩu mới (đã mã hóa)
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json([
+            'message' => 'Đổi mật khẩu thành công!'
+        ]);
+    }
+
+    // 5. API Cập nhật thông tin cá nhân
+    public function updateProfile(Request $request)
+    {
+        $user = $request->user();
+
+        // Validate dữ liệu (Email không cho phép đổi để tránh lỗi đăng nhập)
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'phone' => 'nullable|string|max:15',
+            'class' => 'nullable|string|max:50',
+        ]);
+
+        // Cập nhật thông tin
+        $user->name = $request->name;
+        $user->phone = $request->phone;
+        
+        // Nếu là Sinh viên (role = 0) thì mới cập nhật lớp học
+        if ($user->role == 0) {
+            $user->class = $request->class;
+        }
+        
+        $user->save();
+
+        return response()->json([
+            'message' => 'Cập nhật thông tin thành công!',
+            'user' => $user
+        ]);
+    }
 }
